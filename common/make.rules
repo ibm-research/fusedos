@@ -1,0 +1,108 @@
+# begin_generated_IBM_copyright_prolog
+#
+# This is an automatically generated copyright prolog.
+# After initializing,  DO NOT MODIFY OR MOVE
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+#
+# end_generated_IBM_copyright_prolog
+#
+# BG/Q system driver
+#
+BGQ_DRIVER_DIR=/bgsys/drivers/ppcfloor
+#
+# linux version
+#
+ASF_LINUX_VERSION=3.4.22-BGQ-rc3
+#
+# directory where linux is build
+#
+ASF_LINUX_DIR=$(TOP)/linux/$(ASF_LINUX_VERSION)
+
+#
+# The following include makes sure modules always use the right kernel build directory
+#
+-include $(ASF_LINUX_DIR)/build/config
+
+ASF_LINUX_BUILD_DIR=$(ASF_LINUX_DIR)
+ASF_LINUX_HEADERS_DIR=$(ASF_LINUX_DIR)/include/$(LINUX_LAST_PATCHSET)/include
+
+CROSS=$(BGQ_DRIVER_DIR)/gnu-linux/powerpc64-bgq-linux/bin/
+
+MV=mv -f
+CP=cp -f
+RM=rm -rf
+SED=sed
+MAKE=make
+PATCH=patch
+TAR=tar
+MKDIR=mkdir -p
+
+CROSS_CC  = $(CROSS)gcc
+CROSS_CXX = $(CROSS)g++
+CROSS_LD  = $(CROSS)ld
+CROSS_AR  = $(CROSS)ar
+CROSS_AS  = $(CROSS)as
+CROSS_OBJDUMP = $(CROSS)objdump
+CROSS_OBJCOPY = $(CROSS)objcopy
+CROSS_READELF = $(CROSS)readelf
+
+#
+# global c/cpp flags
+#
+ASF_GLOBAL_CFLAGS   = -mno-update
+ASF_GLOBAL_CXXFLAGS = -mno-update
+
+#
+# try using precompiled binaries, unless someone sets ASF_FORCE_BUILD differently
+#
+ASF_FORCE_BUILD ?= 0
+
+ASF_PACKAGE_DIR=$(HOME)/packages
+#
+# directory to store required redhat files
+#
+ASF_EXTERNALS_DIR=/
+
+#
+# where to store releases
+#
+ASF_PREBUILD_DIR=/home/asf/daily_build/latest
+
+#
+# where to put kernel, firmware, ramdisk.gz for booting
+#
+ASF_BOOT_DIR = ${shell echo $${ASF_BOOT_DIR:-$$HOME}}
+
+#
+# directory where ramdisk is build
+#
+ASF_ROOTFS_DIR=$(TOP)/ramdisk/build/$(ASF_TARGET)/rootfs
+
+#
+# check wether using pebuild binaries (target prebuild) or force recompile (target all)
+#
+PRE=$(shell test $(ASF_FORCE_BUILD) -eq 0 -a ! -e build/do_compile -a -e $(PREBUILD) && echo prebuild || echo all)
+
+#
+# generic dependency rules
+#
+%.d: %.c
+	$(SHELL) -ec '$(CC) -M $(CFLAGS) $< | sed "s,$*.o,& $@,g" > $@'
+
+%.d: %.cpp
+	$(SHELL) -ec '$(CC) -M $(CXXFLAGS) $< | sed "s,$*.o,& $@,g" > $@'

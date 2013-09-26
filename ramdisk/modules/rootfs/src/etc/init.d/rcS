@@ -1,0 +1,159 @@
+#!/bin/busybox ash
+# begin_generated_IBM_copyright_prolog
+#
+# This is an automatically generated copyright prolog.
+# After initializing,  DO NOT MODIFY OR MOVE
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+#
+# end_generated_IBM_copyright_prolog
+busybox echo "Starting `busybox basename $0`"
+
+# create directories
+for d in bin dev/shm etc home mnt proc sys sbin lib64 lib usr/bin \
+         usr/sbin usr/lib usr/lib64 tmp var
+do
+    busybox test -d $d || busybox mkdir -p $d
+done
+
+# create busybox links
+for f in `busybox cat /etc/.busybox.links`; do
+    busybox test -e $f || busybox ln -s /bin/busybox $f
+done
+
+error() {
+    echo "ERROR: $*, can't continue"
+    sleep 999d
+}
+
+# start syslogd
+syslogd
+
+# fix file permissions
+chown -R 0.0 /
+find / -type d -exec chmod 755 {} \;
+find /root/.ssh -type f -exec chmod 600 {} \;
+chmod 1777 /tmp
+chmod 0700 /etc/init.d
+
+# mount synthetic file systems
+mount /proc
+mount /sys
+
+# enable kernel debug messages
+# see proc(5) and syslog(2)
+echo 7 4 1 7 >/proc/sys/kernel/printk
+
+# configure kernel parameters via sysctl
+sysctl -p /etc/sysctl.conf
+
+# enable udev
+echo /bin/mdev > /proc/sys/kernel/hotplug
+mdev -s
+
+# mount tmpfs
+mount -t tmpfs tmpfs /dev/shm
+mount -t tmpfs tmpfs /var
+mount -t tmpfs tmpfs /tmp
+
+# create empty files
+mkdir -p /var/log /var/run /var/lock/subsys
+touch /var/log/lastlog
+touch /var/log/wtmp
+touch /var/run/utmp
+
+# prepare modprobe
+ldconfig
+depmod || error "'depmod' failed"
+
+# fix /etc/mtab
+ln -sf /proc/mounts /etc/mtab
+
+. /dev/bgpers
+. /etc/bg_functions.sh
+
+if [ $BG_NODE_TYPE = "CN" ]; then
+    ASF_BASENAME=crank
+else
+    ASF_BASENAME=irank
+fi
+bg_add_profile ASF_BASENAME $ASF_BASENAME
+
+#
+# hostnames
+#
+ASF_RANKNAME=`bg_hostname $ASF_BASENAME $BG_NODE_COORDS $BG_NODE_DIMENSIONS`
+bg_add_profile ASF_RANKNAME $ASF_RANKNAME
+
+ASF_HOSTNAME=`echo $BG_LOCATION | tr -d '-' | tr [A-Z] [a-z]`
+bg_add_profile ASF_HOSTNAME $ASF_HOSTNAME
+
+if [ $BG_NODE_TYPE = "ION" ]; then
+    hostname $ASF_HOSTNAME
+else
+    hostname $ASF_RANKNAME
+fi
+#
+# fix permissions of /dev/*
+#
+chmod 666 /dev/*
+chmod 1777 /dev/shm
+
+#
+# start common services in defined order
+#
+test -x /etc/init.d/roq         && /etc/init.d/roq
+test -x /etc/init.d/network     && /etc/init.d/network
+test -x /etc/init.d/ntpd        && /etc/init.d/ntpd
+test -x /etc/init.d/diod        && /etc/init.d/diod
+test -x /etc/init.d/ofed        && /etc/init.d/ofed
+test -x /etc/init.d/nfs         && /etc/init.d/nfs
+test -x /etc/init.d/openssh     && /etc/init.d/openssh
+test -x /etc/init.d/slurm       && /etc/init.d/slurm
+test -x /etc/init.d/fusedos     && /etc/init.d/fusedos
+
+#
+# start IO node services in defined order
+#
+if [ $BG_NODE_TYPE = "ION" ]; then
+    test -x /etc/init.d/fusionio    && /etc/init.d/fusionio
+    test -x /etc/init.d/xrootd      && /etc/init.d/xrootd
+    test -x /etc/init.d/db2         && /etc/init.d/db2
+    test -x /etc/init.d/lsf         && /etc/init.d/lsf
+fi
+
+#
+# start CN node services in defined order
+#
+#if [ $BG_NODE_TYPE = "CN" ]; then
+#fi
+
+#
+# notify control system
+#
+echo "1" > /dev/bgfirmware
+
+#
+# all done
+#
+cat >/etc/motd <<EOF
+Welcome to `hostname` ($BG_LOCATION ${BG_INTF0_NAME:-NA}:$BG_INTF0_IPV4 ${BG_INTF1_NAME:-NA}:$BG_INTF1_IPV4)
+EOF
+cat /etc/asf-release >> /etc/motd
+cat /etc/motd
+
+echo "rcS Done."

@@ -1,0 +1,269 @@
+diff -uNr bgq-V1R2M1.orig/comm/lib/dev/mpich2/configure.ac bgq-V1R2M1/comm/lib/dev/mpich2/configure.ac
+--- bgq-V1R2M1.orig/comm/lib/dev/mpich2/configure.ac	2013-09-04 11:25:26.000000000 -0400
++++ bgq-V1R2M1/comm/lib/dev/mpich2/configure.ac	2013-09-04 11:55:55.000000000 -0400
+@@ -1561,11 +1561,11 @@
+         export cross_compiling
+ 	# Export all cross variables.  Any subsidiary configure should also
+         # export CROSS_xxx
+-	rm -f confcross
++	rm -f /tmp/xxx_confcross
+ 	(set) 2>&1 | grep CROSS_ | \
+-	      sed -e 's/^/export /g' -e 's/=.*//g' > confcross
+-	. confcross
+-	rm -f confcross      
++	      sed -e 's/^/export /g' -e 's/=.*//g' > /tmp/xxx_confcross
++	. /tmp/xxx_confcross
++	rm -f /tmp/xxx_confcross      
+     fi
+ fi
+ 
+diff -uNr bgq-V1R2M1.orig/comm/lib/dev/mpich2/src/mpi/romio/configure.ac bgq-V1R2M1/comm/lib/dev/mpich2/src/mpi/romio/configure.ac
+--- bgq-V1R2M1.orig/comm/lib/dev/mpich2/src/mpi/romio/configure.ac	2013-09-04 11:25:23.000000000 -0400
++++ bgq-V1R2M1/comm/lib/dev/mpich2/src/mpi/romio/configure.ac	2013-09-04 10:35:09.000000000 -0400
+@@ -22,7 +22,7 @@
+ AC_CONFIG_AUX_DIR([confdb])
+ AC_CONFIG_MACRO_DIR([confdb])
+ 
+-AM_INIT_AUTOMAKE([-Wall -Werror foreign 1.12.3 silent-rules subdir-objects])
++AM_INIT_AUTOMAKE([-Wall foreign 1.12.3 silent-rules subdir-objects])
+ AM_MAINTAINER_MODE([enable])
+ 
+ AM_PROG_AR
+diff -uNr bgq-V1R2M1.orig/extlib/boost_1_49/boost-fc19.patch bgq-V1R2M1/extlib/boost_1_49/boost-fc19.patch
+--- bgq-V1R2M1.orig/extlib/boost_1_49/boost-fc19.patch	1969-12-31 19:00:00.000000000 -0500
++++ bgq-V1R2M1/extlib/boost_1_49/boost-fc19.patch	2013-09-03 21:01:27.000000000 -0400
+@@ -0,0 +1,68 @@
++diff -uNr boost_1_49_0.orig/boost/thread/xtime.hpp boost_1_49_0/boost/thread/xtime.hpp
++--- boost_1_49_0.orig/boost/thread/xtime.hpp	2013-09-03 20:56:57.000000000 -0400
+++++ boost_1_49_0/boost/thread/xtime.hpp	2013-09-03 20:31:03.000000000 -0400
++@@ -20,7 +20,7 @@
++ 
++ enum xtime_clock_types
++ {
++-    TIME_UTC=1
+++    TIME_UTC_=1
++ //    TIME_TAI,
++ //    TIME_MONOTONIC,
++ //    TIME_PROCESS,
++@@ -68,7 +68,7 @@
++ 
++ inline int xtime_get(struct xtime* xtp, int clock_type)
++ {
++-    if (clock_type == TIME_UTC)
+++    if (clock_type == TIME_UTC_)
++     {
++         *xtp=get_xtime(get_system_time());
++         return clock_type;
++diff -uNr boost_1_49_0.orig/libs/thread/src/pthread/timeconv.inl boost_1_49_0/libs/thread/src/pthread/timeconv.inl
++--- boost_1_49_0.orig/libs/thread/src/pthread/timeconv.inl	2013-09-03 20:57:36.000000000 -0400
+++++ boost_1_49_0/libs/thread/src/pthread/timeconv.inl	2013-09-03 20:43:18.000000000 -0400
++@@ -20,8 +20,8 @@
++ inline void to_time(int milliseconds, boost::xtime& xt)
++ {
++     int res = 0;
++-    res = boost::xtime_get(&xt, boost::TIME_UTC);
++-    BOOST_ASSERT(res == boost::TIME_UTC); (void)res;
+++    res = boost::xtime_get(&xt, boost::TIME_UTC_);
+++    BOOST_ASSERT(res == boost::TIME_UTC_); (void)res;
++ 
++     xt.sec += (milliseconds / MILLISECONDS_PER_SECOND);
++     xt.nsec += ((milliseconds % MILLISECONDS_PER_SECOND) *
++@@ -56,8 +56,8 @@
++ {
++     boost::xtime cur;
++     int res = 0;
++-    res = boost::xtime_get(&cur, boost::TIME_UTC);
++-    BOOST_ASSERT(res == boost::TIME_UTC); (void)res;
+++    res = boost::xtime_get(&cur, boost::TIME_UTC_);
+++    BOOST_ASSERT(res == boost::TIME_UTC_); (void)res;
++ 
++     if (boost::xtime_cmp(xt, cur) <= 0)
++     {
++@@ -87,8 +87,8 @@
++ {
++     boost::xtime cur;
++     int res = 0;
++-    res = boost::xtime_get(&cur, boost::TIME_UTC);
++-    BOOST_ASSERT(res == boost::TIME_UTC); (void)res;
+++    res = boost::xtime_get(&cur, boost::TIME_UTC_);
+++    BOOST_ASSERT(res == boost::TIME_UTC_); (void)res;
++ 
++     if (boost::xtime_cmp(xt, cur) <= 0)
++         milliseconds = 0;
++@@ -109,8 +109,8 @@
++ {
++     boost::xtime cur;
++     int res = 0;
++-    res = boost::xtime_get(&cur, boost::TIME_UTC);
++-    BOOST_ASSERT(res == boost::TIME_UTC); (void)res;
+++    res = boost::xtime_get(&cur, boost::TIME_UTC_);
+++    BOOST_ASSERT(res == boost::TIME_UTC_); (void)res;
++ 
++     if (boost::xtime_cmp(xt, cur) <= 0)
++         microseconds = 0;
+diff -uNr bgq-V1R2M1.orig/extlib/boost_1_49/Makefile bgq-V1R2M1/extlib/boost_1_49/Makefile
+--- bgq-V1R2M1.orig/extlib/boost_1_49/Makefile	2013-09-04 11:28:12.000000000 -0400
++++ bgq-V1R2M1/extlib/boost_1_49/Makefile	2013-09-04 11:06:53.000000000 -0400
+@@ -9,12 +9,13 @@
+ MAKECPUS=$(shell grep -c '^processor' /proc/cpuinfo)
+ 
+ #do nothing by default
+-all install:
++all install: reallyinstall
+ 
+ reallyinstall: boost_1_49_0/b2
+ 
+ boost_1_49_0: boost_1_49_0.tar.bz2
+ 	tar xjf $<
++	patch -p0 -E < boost-fc19.patch
+ 	touch $@
+ 
+ boost_1_49_0/bootstrap.sh: boost_1_49_0
+diff -uNr bgq-V1R2M1.orig/ras/src/Makefile bgq-V1R2M1/ras/src/Makefile
+--- bgq-V1R2M1.orig/ras/src/Makefile	2013-09-04 11:25:28.000000000 -0400
++++ bgq-V1R2M1/ras/src/Makefile	2013-09-04 11:05:15.000000000 -0400
+@@ -53,6 +53,7 @@
+ LDFLAGS  += -Wl,-rpath,$(BGQ_INSTALL_DIR)/xml/lib
+ LDFLAGS  += -lexpat -ldl
+ 
++CXXFLAGS = # Get rid of -Werror
+ CXXFLAGS += -iquote $(include_install_dir)
+ CXXFLAGS += -isystem $(BGQ_INSTALL_DIR)/xml/include
+ CXXFLAGS += -isystem $(BGQ_INSTALL_DIR)/bgq_util/include
+diff -uNr bgq-V1R2M1.orig/scripts/Makefile.main bgq-V1R2M1/scripts/Makefile.main
+--- bgq-V1R2M1.orig/scripts/Makefile.main	2013-09-04 11:25:28.000000000 -0400
++++ bgq-V1R2M1/scripts/Makefile.main	2013-09-04 11:15:41.000000000 -0400
+@@ -27,7 +27,7 @@
+   DIRS+= diags
+   DIRS+= extlib
+   DIRS+= scantools
+-  DIRS+= coreprocessor
++#  DIRS+= coreprocessor
+   DIRS+= bgws
+   DIRS+= tools
+ 
+@@ -78,9 +78,9 @@
+   DIRS+= toolchain
+   DIRS+= toolchain-4.7.2
+   DIRS+= linux
+-  DIRS+= hlcs
+-  DIRS += navigator
+-  DIRS+= teal
++#  DIRS+= hlcs
++#  DIRS += navigator
++#  DIRS+= teal
+ 
+ else
+   DIRS += fpga_accel
+diff -uNr bgq-V1R2M1.orig/utility/test/cxxsockets/Makefile bgq-V1R2M1/utility/test/cxxsockets/Makefile
+--- bgq-V1R2M1.orig/utility/test/cxxsockets/Makefile	2013-09-04 11:25:29.000000000 -0400
++++ bgq-V1R2M1/utility/test/cxxsockets/Makefile	2013-09-03 21:33:18.000000000 -0400
+@@ -18,7 +18,7 @@
+ CXXFLAGS += -isystem $(BGQ_INSTALL_DIR)
+ CXXFLAGS += -g
+ 
+-LDFLAGS += -L $(BGQ_BUILD_DIR)/utility/src-lbgutility
++LDFLAGS += -L $(BGQ_BUILD_DIR)/utility/src -lbgutility
+ LDFLAGS += -Wl,-rpath,$(BGQ_BUILD_DIR)/utility/src
+ LDFLAGS += -L $(BGQ_BUILD_DIR)/utility/src/cxxsockets -lcxxsockets
+ LDFLAGS += -Wl,-rpath,$(BGQ_BUILD_DIR)/utility/src/cxxsockets
+@@ -38,10 +38,10 @@
+ 	$(CXX) -lboost_thread-mt $(LDFLAGS) -o $@ $(filter-out Makefile, $^)
+ 
+ clientAssignAddrError: clientAssignAddrError.o
+-	$(CXX) -lboost_thread-mt $(LDFLAGS) -o $@ $(filter-out Makefile, $^)
++	$(CXX) -lboost_thread-mt -lboost_system-mt -lpthread -llog4cxx -lssl -lcrypto $(LDFLAGS) -o $@ $(filter-out Makefile, $^)
+ 
+ asio: asio.o
+-	$(CXX) -lboost_thread-mt -lboost_system $(LDFLAGS) -o $@ $(filter-out Makefile, $^)
++	$(CXX) -lboost_thread-mt -lboost_system-mt -lpthread $(LDFLAGS) -o $@ $(filter-out Makefile, $^)
+ 
+ out_%: test_% $(etc_install_dir)/bg.properties.tpl
+ 	@strip $<
+diff -uNr bgq-V1R2M1.orig/utility/test/exec/Makefile bgq-V1R2M1/utility/test/exec/Makefile
+--- bgq-V1R2M1.orig/utility/test/exec/Makefile	2013-09-04 11:25:29.000000000 -0400
++++ bgq-V1R2M1/utility/test/exec/Makefile	2013-09-03 21:48:37.000000000 -0400
+@@ -31,6 +31,7 @@
+ 
+ LDFLAGS += -L $(BGQ_BUILD_DIR)/utility/src -lbgutility
+ LDFLAGS += -Wl,-rpath,$(BGQ_BUILD_DIR)/utility/src
++LDFLAGS += -lboost_program_options-mt -llog4cxx
+ 
+ 
+ TESTERS   = $(patsubst %.cc,%,$(wildcard *.cc))
+diff -uNr bgq-V1R2M1.orig/utility/test/performance/Makefile bgq-V1R2M1/utility/test/performance/Makefile
+--- bgq-V1R2M1.orig/utility/test/performance/Makefile	2013-09-04 11:25:29.000000000 -0400
++++ bgq-V1R2M1/utility/test/performance/Makefile	2013-09-03 21:35:52.000000000 -0400
+@@ -36,6 +36,7 @@
+ LDFLAGS += -lboost_system-mt
+ LDFLAGS += -lboost_thread-mt
+ LDFLAGS += -lboost_unit_test_framework-mt
++LDFLAGS += -llog4cxx
+ 
+ 
+ TESTERS   = $(patsubst %.cc,%,$(filter-out sample_timer.cc sample.cc,$(wildcard *.cc)))
+diff -uNr bgq-V1R2M1.orig/utility/test/PluginHandle/Makefile bgq-V1R2M1/utility/test/PluginHandle/Makefile
+--- bgq-V1R2M1.orig/utility/test/PluginHandle/Makefile	2013-09-04 11:25:29.000000000 -0400
++++ bgq-V1R2M1/utility/test/PluginHandle/Makefile	2013-09-03 21:38:13.000000000 -0400
+@@ -35,6 +35,7 @@
+ LDFLAGS += -ldl
+ LDFLAGS += -Wl,-rpath,$(BGQ_BUILD_DIR)/utility/src
+ LDFLAGS += -lboost_unit_test_framework-mt
++LDFLAGS += -llog4cxx
+ 
+ TESTERS   = plugin
+ 
+diff -uNr bgq-V1R2M1.orig/utility/test/PortConfiguration/Makefile bgq-V1R2M1/utility/test/PortConfiguration/Makefile
+--- bgq-V1R2M1.orig/utility/test/PortConfiguration/Makefile	2013-09-04 11:25:29.000000000 -0400
++++ bgq-V1R2M1/utility/test/PortConfiguration/Makefile	2013-09-03 21:46:50.000000000 -0400
+@@ -32,6 +32,7 @@
+ LDFLAGS += \
+  -L$(BGQ_INSTALL_DIR)/extlib/lib -lboost_unit_test_framework-mt -Wl,-rpath,$(BGQ_INSTALL_DIR)/extlib/lib \
+  -L../../src -lbgutility -Wl,-rpath,../../src
++LDFLAGS += -lboost_program_options-mt -lboost_system-mt -lpthread -lssl -lcrypto
+ 
+ 
+ exes := \
+diff -uNr bgq-V1R2M1.orig/utility/test/SignalHandler/Makefile bgq-V1R2M1/utility/test/SignalHandler/Makefile
+--- bgq-V1R2M1.orig/utility/test/SignalHandler/Makefile	2013-09-04 11:25:29.000000000 -0400
++++ bgq-V1R2M1/utility/test/SignalHandler/Makefile	2013-09-03 21:42:12.000000000 -0400
+@@ -31,6 +31,7 @@
+ 
+ LDFLAGS += -L $(BGQ_BUILD_DIR)/utility/src -lbgutility
+ LDFLAGS += -Wl,-rpath,$(BGQ_BUILD_DIR)/utility/src
++LDFLAGS += -llog4cxx -lpthread
+ 
+ 
+ TESTERS   = $(patsubst %.cc,%,$(filter-out sample.cc,$(wildcard *.cc)))
+diff -uNr bgq-V1R2M1.orig/utility/test/Symlink/Makefile bgq-V1R2M1/utility/test/Symlink/Makefile
+--- bgq-V1R2M1.orig/utility/test/Symlink/Makefile	2013-09-04 11:25:29.000000000 -0400
++++ bgq-V1R2M1/utility/test/Symlink/Makefile	2013-09-03 21:36:20.000000000 -0400
+@@ -31,6 +31,7 @@
+ 
+ LDFLAGS += -L $(BGQ_BUILD_DIR)/utility/src -lbgutility
+ LDFLAGS += -Wl,-rpath,$(BGQ_BUILD_DIR)/utility/src
++LDFLAGS += -lboost_system-mt
+ 
+ 
+ TESTERS   = $(patsubst %.cc,%,$(filter-out sample.cc,$(wildcard *.cc)))
+diff -uNr bgq-V1R2M1.orig/xml/src/library/Makefile bgq-V1R2M1/xml/src/library/Makefile
+--- bgq-V1R2M1.orig/xml/src/library/Makefile	2013-09-04 11:25:28.000000000 -0400
++++ bgq-V1R2M1/xml/src/library/Makefile	2013-09-03 21:50:51.000000000 -0400
+@@ -115,7 +115,7 @@
+ 
+ INSTALL_LIST = $(addprefix $(MODULE_LIB_DIR)/,$(TARGET_LIST))
+ 
+-echo OS_ARCH=$(OS_ARCH)
++#echo OS_ARCH=$(OS_ARCH)
+ 
+ default: install 
+
+diff -rNu bgq-V1R2M1.orig/comm/Make.rules bgq-V1R2M1/comm/Make.rules
+--- bgq-V1R2M1.orig/comm/Make.rules     2013-09-05 16:59:59.404285850 -0400
++++ bgq-V1R2M1/comm/Make.rules  2013-09-05 16:15:12.829748707 -0400
+@@ -37,4 +37,4 @@
+
+ # This attempts to guess if we are building in parallel.  If not,
+ # JLEVEL is set and we can try to do sub-builds in parallel
+-JLEVEL = ${shell if echo ${MAKEFLAGS} ${MFLAGS} | grep -qv jobserver; then echo -j12; fi}
++JLEVEL = ${shell if echo ${MAKEFLAGS} ${MFLAGS} | grep -qv jobserver; then echo -j1; fi}

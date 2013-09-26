@@ -1,0 +1,86 @@
+diff --git a/configure b/configure
+index e0b2342..ddb54ed 100755
+--- a/configure
++++ b/configure
+@@ -7464,9 +7464,13 @@ fi
+ 
+ 
+ 
++
++
+ for ac_header in \
+   getopt.h \
+   pthread.h \
++  sys/xattr.h \
++  attr/xattr.h \
+ 
+ do
+ as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+@@ -8868,13 +8872,13 @@ got_tcmalloc=no
+ 
+ # Check whether --with-tcmalloc was given.
+ if test "${with_tcmalloc+set}" = set; then
+-  withval=$with_tcmalloc; want_tcmalloc=yes
++  withval=$with_tcmalloc;
+ else
+-  want_tcmalloc=no
++  with_tcmalloc=no
+ fi
+ 
+ 
+-if test x$want_tcmalloc == xyes; then
++if test x$with_tcmalloc == xyes; then
+ 
+   { $as_echo "$as_me:$LINENO: checking for tc_cfree in default libs" >&5
+ $as_echo_n "checking for tc_cfree in default libs... " >&6; }
+@@ -9034,8 +9038,8 @@ cat >>confdefs.h <<\_ACEOF
+ _ACEOF
+ 
+   else
+-    { { $as_echo "$as_me:$LINENO: error: building without Google-perftools malloc" >&5
+-$as_echo "$as_me: error: building without Google-perftools malloc" >&2;}
++    { { $as_echo "$as_me:$LINENO: error: cannot build without Google-perftools malloc" >&5
++$as_echo "$as_me: error: cannot build without Google-perftools malloc" >&2;}
+    { (exit 1); exit 1; }; }
+   fi
+ fi
+diff --git a/configure.ac b/configure.ac
+index 79cae06..d77846b 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -39,6 +39,8 @@ AC_HEADER_STDC
+ AC_CHECK_HEADERS( \
+   getopt.h \
+   pthread.h \
++  sys/xattr.h \
++  attr/xattr.h \
+ )
+ 
+ ##
+diff --git a/diod/xattr.c b/diod/xattr.c
+index 25932a6..e013aa9 100644
+--- a/diod/xattr.c
++++ b/diod/xattr.c
+@@ -27,6 +27,14 @@
+ 
+ #if HAVE_CONFIG_H
+ #include "config.h"
++
++#if HAVE_SYS_XATTR_H
++#include <sys/xattr.h>
++#endif
++#if HAVE_ATTR_XATTR_H
++#include <attr/xattr.h>
++#endif
++
+ #endif
+ #include <stdlib.h>
+ #include <unistd.h>
+@@ -38,7 +46,6 @@
+ #include <errno.h>
+ #include <sys/types.h>
+ #include <sys/file.h>
+-#include <attr/xattr.h>
+ #include <sys/stat.h>
+ #include <sys/statfs.h>
+ #include <sys/socket.h>

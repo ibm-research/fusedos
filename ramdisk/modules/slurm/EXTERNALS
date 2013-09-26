@@ -1,0 +1,35 @@
+# begin_generated_IBM_copyright_prolog
+#
+# This is an automatically generated copyright prolog.
+# After initializing,  DO NOT MODIFY OR MOVE
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+#
+# end_generated_IBM_copyright_prolog
+/lib64/ld64.so.1
+/lib64/libaudit.so.1
+/lib64/libcrypt.so.1
+/lib64/libc.so.6
+/lib64/libdl.so.2
+/lib64/libfreebl3.so
+/lib64/libpam_misc.so.0
+/lib64/libpam.so.0
+/lib64/libpthread.so.0
+/lib64/libutil.so.1
+/lib64/libz.so.1
+/lib64/libgcc_s.so.1
+/usr/lib64/libcrypto.so.10

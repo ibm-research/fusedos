@@ -1,0 +1,12 @@
+#!/bin/bash
+echo "Starting `basename $0`"
+. /dev/bgpers
+
+if [ $BG_NODE_TYPE = "CN" ]; then
+	OTHER_RANK_NAME=irank
+else
+	OTHER_RANK_NAME=crank
+fi
+
+grep -v $OTHER_RANK_NAME /etc/hosts > /tmp/roq_new_hosts
+mv /tmp/roq_new_hosts /etc/hosts

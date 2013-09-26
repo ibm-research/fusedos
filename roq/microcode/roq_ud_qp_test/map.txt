@@ -1,0 +1,9 @@
+# The first line corresponds to the max coordinates in each dimension.
+# Subsequent lines, one per rank, list the coordinates of each rank.
+# Do not have empty lines in between.
+#
+# Max coordinates for each dimension...
+1 0 0 0 0
+# Node coordinates for each dimension...
+0 0 0 0 0
+1 0 0 0 0

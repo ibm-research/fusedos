@@ -1,0 +1,7 @@
+*.o
+cl
+killspcs
+print_size_and_alignment
+sfjs
+spcml
+vmm_mapuserspace

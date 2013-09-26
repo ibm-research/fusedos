@@ -1,0 +1,78 @@
+#!/bin/bash
+# begin_generated_IBM_copyright_prolog
+#
+# This is an automatically generated copyright prolog.
+# After initializing,  DO NOT MODIFY OR MOVE
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+#
+# end_generated_IBM_copyright_prolog
+# Todo: compute nodes
+echo "Starting `basename $0`"
+
+. /dev/bgpers
+. /etc/bg_profile
+
+PID=`pidof ntpd`
+NTPSERVER=$BG_BGSYS_IPV4
+
+start() {
+    if [ -n "$PID" ]
+    then
+        echo "ntpd already running ($PID)"
+        exit 1
+    fi
+
+    # set initial date
+    T=`stat -c "%y" /boot/System.map`
+    date "${T%%\.*}"
+
+    if [ "$BG_NODE_TYPE" == "ION" ]
+    then
+	#if [ $ASF_RANK -eq 0 ]
+	#then
+	    ntpd -l -p $NTPSERVER
+	#else
+            #ntpd -l -p irank0
+        #fi
+    else
+	ntpd -p irank`cat /sys/class/infiniband/roq/nearest_io_rank`
+    fi
+}
+
+stop() {
+    if [ -n "$PID" ]
+    then
+        kill -SIGKILL $PID
+    fi
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  *)
+    start
+    ;;
+esac

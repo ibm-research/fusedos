@@ -1,0 +1,19 @@
+#!/bin/sh
+echo "Starting `basename $0`"
+
+# create dev files and insmod driver
+mknod -m 666 /dev/roq_usmu c 121 0
+modprobe roq
+
+. /etc/bg_functions.sh
+hostname `bg_hostname`
+
+# start roq firmware
+nice -n -20 /usr/bin/roq_userspace
+
+# wait for roq interface to show up
+while :; do
+    ifconfig roq0 >/dev/null 2>&1 && break
+    sleep 1
+done
+

@@ -1,0 +1,66 @@
+diff -rNu toolchain.orig/buildToolChain.sh toolchain/buildToolChain.sh
+--- toolchain.orig/buildToolChain.sh	2013-09-04 21:13:21.255243733 -0400
++++ toolchain/buildToolChain.sh	2013-09-03 17:23:00.179204969 -0400
+@@ -296,6 +296,11 @@
+    echo "Error trying to apply the gnu patch"
+ exit 1
+ fi
++patch -p1 -E < $PATCHES_PATH/gnu-fc19.patch
++if [ $? != 0 ]; then
++   echo "Error trying to apply the gnu patch"
++exit 1
++fi
+ cd $SCRIPT_DIR/gnu
+ rm glibc-$GLIBC_VER/sysdeps/powerpc/powerpc64/memcpy.S
+ rm glibc-$GLIBC_VER/sysdeps/powerpc/powerpc64/memset.S
+diff -rNu toolchain.orig/gnu-fc19.patch toolchain/gnu-fc19.patch
+--- toolchain.orig/gnu-fc19.patch	1969-12-31 19:00:00.000000000 -0500
++++ toolchain/gnu-fc19.patch	2013-09-03 17:16:05.908489484 -0400
+@@ -0,0 +1,11 @@
++diff -uNr gnu.orig/Makefile.linux.glibc gnu/Makefile.linux.glibc
++--- gnu.orig/Makefile.linux.glibc	2013-09-03 17:15:29.148422797 -0400
+++++ gnu/Makefile.linux.glibc	2013-09-03 17:15:18.118403187 -0400
++@@ -186,6 +186,7 @@
++ 		${OS_HEADER_DIR}/asm-generic && \
++ 	${CP} -r -L ${BGQ_LINUX_HEADER}/linux \
++ 		 ${OS_HEADER_DIR}/linux && \
+++	${CP} ${BGQ_BUILD_DIR}/sysinfo-fc19.h ${OS_HEADER_DIR}/linux/sysinfo.h
++ 	${TOUCH} $@
++ # --------------------------------------------------------------------------
++ # If the user has used the configure option to use faster code seqeuences  |
+diff -rNu toolchain.orig/sysinfo-fc19.h toolchain/sysinfo-fc19.h
+--- toolchain.orig/sysinfo-fc19.h	1969-12-31 19:00:00.000000000 -0500
++++ toolchain/sysinfo-fc19.h	2013-09-03 17:03:49.107259043 -0400
+@@ -0,0 +1,32 @@
++#ifndef _LINUX_SYSINFO_H
++#define _LINUX_SYSINFO_H
++
++#include <linux/types.h>
++
++#ifndef __kernel_long_t
++typedef long            __kernel_long_t;
++typedef unsigned long   __kernel_ulong_t;
++#endif
++
++typedef unsigned short __u16;
++typedef unsigned int __u32;
++
++#define SI_LOAD_SHIFT	16
++struct sysinfo {
++	__kernel_long_t uptime;		/* Seconds since boot */
++	__kernel_ulong_t loads[3];	/* 1, 5, and 15 minute load averages */
++	__kernel_ulong_t totalram;	/* Total usable main memory size */
++	__kernel_ulong_t freeram;	/* Available memory size */
++	__kernel_ulong_t sharedram;	/* Amount of shared memory */
++	__kernel_ulong_t bufferram;	/* Memory used by buffers */
++	__kernel_ulong_t totalswap;	/* Total swap space size */
++	__kernel_ulong_t freeswap;	/* swap space still available */
++	__u16 procs;		   	/* Number of current processes */
++	__u16 pad;		   	/* Explicit padding for m68k */
++	__kernel_ulong_t totalhigh;	/* Total high memory size */
++	__kernel_ulong_t freehigh;	/* Available high memory size */
++	__u32 mem_unit;			/* Memory unit size in bytes */
++	char _f[20-2*sizeof(__kernel_ulong_t)-sizeof(__u32)];	/* Padding: libc5 uses this.. */
++};
++
++#endif /* _LINUX_SYSINFO_H */

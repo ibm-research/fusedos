@@ -1,0 +1,60 @@
+#!/bin/bash
+# begin_generated_IBM_copyright_prolog
+#
+# This is an automatically generated copyright prolog.
+# After initializing,  DO NOT MODIFY OR MOVE
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+#
+# end_generated_IBM_copyright_prolog
+echo "Starting `basename $0`"
+
+. /etc/bg_profile
+
+mkdir -p /tmp/slurm
+
+SLURM_HOME=/opt/slurm
+SLURM_CONF=$SLURM_HOME/etc/slurm.conf
+cat ${SLURM_CONF}.tmpl > $SLURM_CONF
+CPU_COUNT=`grep -c '^processor' /proc/cpuinfo`
+
+# update Slurm config file
+NR=$((ASF_NODE_COUNT - 1))
+
+NODES="${ASF_BASENAME}[0-$NR]"
+CONTROLMACHINE=${ASF_BASENAME}0
+
+cat <<EOF >> $SLURM_CONF
+NodeName=$NODES Procs=$CPU_COUNT State=UNKNOWN
+PartitionName=debug Nodes=$NODES Default=YES MaxTime=INFINITE State=UP Shared=YES
+ControlMachine=$CONTROLMACHINE
+EOF
+
+# Set pinning limit to mvapich/siw can work
+ulimit -l unlimited
+
+if [ $ASF_RANK -eq 0 ]; then
+    # always use rankX names
+    HOSTNAME_BAK=`hostname`
+    hostname $CONTROLMACHINE
+    $SLURM_HOME/sbin/slurmctld -c 
+    sleep 1 # hostname voodoo: race condition deluxe
+    hostname $HOSTNAME_BAK
+fi
+
+$SLURM_HOME/sbin/slurmd -c -N $ASF_RANKNAME
+

@@ -1,0 +1,59 @@
+# begin_generated_IBM_copyright_prolog
+#
+# This is an automatically generated copyright prolog.
+# After initializing,  DO NOT MODIFY OR MOVE
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+#
+# end_generated_IBM_copyright_prolog
+ifndef TOP
+    TOP = $(shell while ! test -e common/make.rules; do cd ..; done; pwd)
+    export TOP
+endif
+
+BGQ_FLOOR_DIR=/bgsys/drivers/ppcfloor
+CL_DIR = $(TOP)/cl
+LINUX_VERS = 3.4.22-BGQ-rc3
+ASFPATCH =
+LINUX_DIR = $(TOP)/linux
+LINUX_INC_DIR = $(LINUX_DIR)/$(LINUX_VERS)/$(ASFPATCH)/include
+LINUX_PPC_INC_DIR = $(LINUX_DIR)/$(LINUX_VERS)/$(ASFPATCH)/arch/powerpc/platforms/bgq
+FW_INC_DIR=$(TOP)/include/spi/include/kernel/firmware
+
+AR = $(BGQ_FLOOR_DIR)/gnu-linux/bin/powerpc64-bgq-linux-ar
+AS = $(BGQ_FLOOR_DIR)/gnu-linux/bin/powerpc64-bgq-linux-as
+
+CC = $(BGQ_FLOOR_DIR)/gnu-linux/bin/powerpc64-bgq-linux-gcc 
+CXX = $(BGQ_FLOOR_DIR)/gnu-linux/bin/powerpc64-bgq-linux-g++
+MPICC = $(BGQ_FLOOR_DIR)/comm/bin/gcc/mpicc
+MPICXX = $(BGQ_FLOOR_DIR)/comm/bin/gcc/mpicxx
+
+XLC = /usr/bin/bgxlc_r -qstdinc
+XLCXX = /usr/bin/bgxlc++_r -qstdinc
+MPIXLCC = $(BGQ_FLOOR_DIR)/comm/xl/bin/mpixlc_r -qstdinc
+MPIXLCXX = $(BGQ_FLOOR_DIR)/comm/xl/bin/mpixlcxx_r -qstdinc
+
+GFORTRAN = $(BGQ_FLOOR_DIR)/gnu-linux/bin/powerpc64-bgq-linux-gfortran
+OBJDUMP = $(BGQ_FLOOR_DIR)/gnu-linux/bin/powerpc64-bgq-linux-objdump
+
+ASFLAGS = -I$(LINUX_INC_DIR) -I$(LINUX_PPC_INC_DIR) -I$(CL_DIR)
+ASFLAGS+= -I$(TOP) -I$(TOP)/include -D__ASSEMBLY__ $(EXTRA_ASFLAGS)
+CFLAGS = -m64 -g -O2 -Werror -Wall  -fno-strict-aliasing -D__CL__ -D__FUSEDOS__ $(EXTRA_CFLAGS)
+CXXFLAGS = -m64 -g -O2 -Werror -Wall  -fno-strict-aliasing -D__CL__ -D__FUSEDOS__ $(EXTRA_CFLAGS)
+ARFLAGS = rcs 
+
+FEDORA = $(shell cat /etc/redhat-release | grep Fedora | wc -l)

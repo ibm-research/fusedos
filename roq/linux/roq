@@ -1,0 +1,25 @@
+#!/bin/bash
+echo "Starting `basename $0`"
+#sleep 30
+sleep 3
+. /dev/bgpers
+
+modprobe roq
+
+# Note: If you want to run FusedOS on compute nodes only, comment out
+# the remainder of this file. It triggers the so-called discovery that
+# initiates communication between I/O and compute nodes via RoQ, and
+# thus would fail with regular I/O nodes.
+
+if [ "$BG_NODE_TYPE" = "CN" ]; then
+	echo "waiting before discovery"
+	sleep 20
+    echo "Running discovery"
+	# wait till discovery is done
+	while [ "0" = "$(cat /sys/class/infiniband/roq/DISCOVERY)" ]; do
+		sleep 10
+	done
+fi
+
+echo "Nearest IO node rank:" `cat /sys/class/infiniband/roq/nearest_io_rank`
+

@@ -1,0 +1,201 @@
+#!/bin/sh
+# begin_generated_IBM_copyright_prolog
+#
+# This is an automatically generated copyright prolog.
+# After initializing,  DO NOT MODIFY OR MOVE
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+#
+# end_generated_IBM_copyright_prolog
+echo "Starting `basename $0`"
+
+. /dev/bgpers
+. /etc/bg_functions.sh
+. /etc/bg_profile
+
+setup_host_files() {
+
+    MACHINEFILE_TMP=`mktemp`
+    HOSTS_TMP=`mktemp`
+    ASF_NODE_COUNT=0
+    # loop on dimension a b c d e
+    set -- `bg_trim_coords $BG_NODE_DIMENSIONS $BG_NODE_TYPE`
+    DA=$1 DB=$2 DC=$3 DD=$4 DE=$5
+    for a in `seq 0 $(expr $DA - 1)`; do
+        for b in `seq 0 $(expr $DB - 1)`; do
+            for c in `seq 0 $(expr $DC - 1)`; do
+                for d in `seq 0 $(expr $DD - 1)`; do
+                    for e in `seq 0 $(expr $DE - 1)`; do
+                        COORDINATES="<$a,$b,$c,$d,$e>"
+                        rank=`bg_coords2rank $COORDINATES $BG_NODE_DIMENSIONS`
+                        ip=`bg_coords2ip $COORDINATES $BG_NODE_TYPE`
+                        hostname=`bg_hostname $ASF_BASENAME $COORDINATES $BG_NODE_DIMENSIONS`
+                        echo "$ip $hostname rank$rank" >> $HOSTS_TMP
+                        echo "$hostname" >> $MACHINEFILE_TMP
+                        ASF_NODE_COUNT=$(expr $ASF_NODE_COUNT + 1)
+                    done
+                done
+            done
+        done
+    done
+    (
+	flock 200
+	sort -n -tk -k2 < $HOSTS_TMP >> /etc/hosts
+    ) 200> /etc/hosts.lock
+    sort -n -tk < $MACHINEFILE_TMP > /etc/machinefile
+    rm -f $MACHINEFILE_TMP $HOSTS_TMP
+#    bg_add_profile ASF_HOSTNAMES $(cat /etc/machinefile)
+    bg_add_profile ASF_NODE_COUNT $ASF_NODE_COUNT
+}
+
+mount_nfs(){
+    case "$BG_BGSYS_IPV4" in
+    172.16.6.*|172.16.3.1)
+            # bgq128sn* | grotius
+            NFS_SERVER_1=172.16.1.10
+            NFS_SERVER_2=172.16.1.16
+            CNT=30
+            while [ $CNT -gt 0 ]; do
+                if ping -c 1 $NFS_SERVER_1 >/dev/null 2>&1 ; then
+                    mkdir -p /bgusr/home{1,2,3} /bgsys /scratch
+                    mount -t nfs -o nolock $NFS_SERVER_1:/data2 /bgusr/home1
+                    mount -t nfs -o nolock $NFS_SERVER_2:/data3 /bgusr/home2
+                    mount -t nfs -o nolock $NFS_SERVER_2:/data4 /bgusr/home3
+                    mount -t nfs -o nolock $NFS_SERVER_2:/data7/eic/scratch /scratch
+                    mount -t nfs -o nolock $BG_BGSYS_IPV4:/bgsys /bgsys
+                    break
+                fi
+                CNT=$(expr $CNT - 1)
+                sleep 1
+            done
+            # copy etc files
+            if [ -r /bgsys/linux/bgfs/etc/passwd ]; then
+                cp -a /bgsys/linux/bgfs/etc/{group,passwd,shadow} /etc/
+            fi
+            # persistant /var 
+#            if grep -q '/bgsys ' /proc/mounts; then
+#                if [ -n "$IP_ETH0" ]; then
+#                    NFS_VAR=/bgsys/linux/nodefs_bgas/$IP_ETH0/var
+#                    mkdir -p $NFS_VAR/{adm,mmfs}
+#                    mkdir -p /var/{adm,mmfs}
+#                    mount -o bind $NFS_VAR/mmfs /var/mmfs
+#                    mount -o bind $NFS_VAR/adm /var/adm
+#                fi
+#            fi
+        ;;
+        esac
+}
+
+
+if [ -e /sys/class/infiniband ]; then
+    if lspci | grep -q 15b3: ; then
+        # incrase PCIe payload size
+        setpci -s 0:0.0 48.b=0x20
+        setpci -s 1:0.0 68.b=0x20
+        echo connected > /sys/class/net/ib0/mode
+        echo 65520 > /sys/class/net/ib0/mtu
+        echo 
+    fi
+    modprobe ib_umad > /dev/null 2>&1
+fi
+
+
+case $BG_INTF0_NAME in
+   eth0)
+    IP_ETH0=$BG_INTF0_IPV4
+    NETMASK_ETH0=$BG_INTF0_NETMASK
+    BROADCAST_ETH0=$BG_INTF0_BROADCAST
+    MTU_ETH0=$BG_INTF0_MTU
+    ;;
+   ib0)
+    IP_IB0=$BG_INTF0_IPV4
+    NETMASK_IB0=$BG_INTF0_NETMASK
+    BROADCAST_IB0=$BG_INTF0_BROADCAST
+    MTU_IB0=$BG_INTF0_MTU
+    ;;
+esac
+
+case $BG_INTF1_NAME in
+   eth0)
+    IP_ETH0=$BG_INTF1_IPV4
+    NETMASK_ETH0=$BG_INTF1_NETMASK
+    BROADCAST_ETH0=$BG_INTF1_BROADCAST
+    MTU_ETH0=$BG_INTF1_MTU
+    ;;
+   ib0)
+    IP_IB0=$BG_INTF1_IPV4
+    NETMASK_IB0=$BG_INTF1_NETMASK
+    BROADCAST_IB0=$BG_INTF1_BROADCAST
+    MTU_IB0=$BG_INTF1_MTU
+    ;;
+esac
+
+if [ -e /sys/class/net/eth0 ]; then
+    if [ -n "$IP_ETH0" -a -n "$NETMASK_ETH0" -a -n "$BROADCAST_ETH0" ]; then
+        ifconfig eth0 $IP_ETH0 netmask $NETMASK_ETH0 broadcast $BROADCAST_ETH0 mtu $MTU_ETH0 up
+        bg_add_profile ASF_IP_ETH $IP_ETH0
+        echo "$IP_ETH0" >/etc/mv2.conf.eth0
+        echo "`hostname` eth0 = $IP_ETH0"
+        CONFIG_EXTERNAL=1
+    fi
+fi
+
+
+if [ -e /sys/class/net/ib0 ]; then
+    if [ -n "$IP_IB0" -a -n "$NETMASK_IB0" -a -n "$BROADCAST_IB0" ]; then
+        ifconfig ib0 $IP_IB0 netmask $NETMASK_IB0 broadcast $BROADCAST_IB0 up
+        bg_add_profile ASF_IP_IB $IP_IB0
+        echo "$IP_IB0" >/etc/mv2.conf.ib0
+        echo "`hostname` ib0 = $IP_IB0"
+        CONFIG_EXTERNAL=1
+    fi
+fi
+
+
+if [ -e /sys/class/net/roq0 ]; then
+    IP_ROQ0=`bg_coords2ip $BG_NODE_COORDS $BG_NODE_TYPE`
+    ifconfig roq0 $IP_ROQ0
+    bg_add_profile ASF_IP_ROQ $IP_ROQ0
+    echo "$IP_ROQ0" >/etc/mv2.conf.roq0
+    ln -s /etc/mv2.conf.roq0 /etc/mv2.conf
+    CONFIG_ROQ=1
+fi
+
+
+if [ -z "$CONFIG_EXTERNAL" -a -z "$CONFIG_ROQ" ]; then
+    echo "ERROR: $BG_LOCATION : no network interface (eth0, ib0 or roq0) available. Can't continue"
+    sleep 999d
+fi
+
+test -n "$CONFIG_EXTERNAL" && mount_nfs
+
+# 
+# /etc/hosts , /etc/machinefile
+#
+setup_host_files
+
+ASF_RANK=`bg_coords2rank $BG_NODE_COORDS $BG_NODE_DIMENSIONS`
+bg_add_profile ASF_RANK $ASF_RANK
+
+ASF_COORDS=`bg_trim_coords $BG_NODE_COORDS | tr -d ' '`
+bg_add_profile ASF_COORDS $ASF_COORDS
+
+#
+# setup network devices
+#
+ifconfig lo 127.0.0.1 up
+

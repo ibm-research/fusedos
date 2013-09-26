@@ -1,0 +1,31 @@
+config INFINIBAND_SOFTIWARP
+	tristate "Software iWARP Stack (EXPERIMENTAL)"
+	depends on INET && EXPERIMENTAL
+	---help---
+	  Kernel Software Implementation of the iWARP protocol stack
+
+	  This driver implements the iWARP protocol stack in software
+	  and interfaces with in-kernel TCP/IP as well as the OFED
+	  verbs interfaces.
+
+	  Please send feedback to <bmt,nfd@zurich.ibm.com>.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called roq.
+
+config INFINIBAND_ROQ
+	tristate "Software virtual rNIC (EXPERIMENTAL)"
+	depends on INFINIBAND
+	#select INFINIBAND_ROQ_DEBUG
+	default m 
+	---help---
+	  Prototype for BGQ
+
+config INFINIBAND_ROQ_DEBUG
+	bool "Enables debug"
+	depends on INFINIBAND_ROQ
+	default n
+
+config ROQ_SOFTIWARP
+	bool "Build like SoftiWarp driver from which roq was derived."
+	default n	  

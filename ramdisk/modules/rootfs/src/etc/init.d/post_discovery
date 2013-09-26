@@ -1,0 +1,61 @@
+#!/bin/sh
+# begin_generated_IBM_copyright_prolog
+#
+# This is an automatically generated copyright prolog.
+# After initializing,  DO NOT MODIFY OR MOVE
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+#
+# end_generated_IBM_copyright_prolog
+echo "Starting `basename $0`"
+. /dev/bgpers
+. /etc/bg_functions.sh
+. /etc/bg_profile
+
+if [ $BG_NODE_TYPE = "CN" ]; then
+    BASENAME=i${ASF_BASENAME:1}
+    NODE_TYPE=ION
+else
+    BASENAME=c${ASF_BASENAME:1}
+    NODE_TYPE=CN
+fi
+
+setup_host_files() {
+    DIMENSIONS=$1
+
+    TEMPFILE=`mktemp`
+    # loop on dimension a b c d e
+    set -- `bg_trim_coords $DIMENSIONS`
+    DA=$1 DB=$2 DC=$3 DD=$4 DE=$5
+    for a in `seq 0 $(expr $DA - 1)`; do
+        for b in `seq 0 $(expr $DB - 1)`; do
+            for c in `seq 0 $(expr $DC - 1)`; do
+                for d in `seq 0 $(expr $DD - 1)`; do
+                    for e in `seq 0 $(expr $DE - 1)`; do
+                        ip=`bg_coords2ip "<$a,$b,$c,$d,$e>" $NODE_TYPE`
+                        hostname=`bg_hostname $BASENAME "<$a,$b,$c,$d,$e>" $DIMENSIONS`
+                        echo "$ip $hostname" >> $TEMPFILE
+                    done
+                done
+            done
+        done
+    done
+    sort -n -tk -k2 < $TEMPFILE >> /etc/hosts
+    rm -f $TEMPFILE
+}
+
+setup_host_files $(cat /sys/class/infiniband/roq/REMOTE_DIMENSIONS)

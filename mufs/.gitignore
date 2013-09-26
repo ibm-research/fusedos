@@ -1,0 +1,9 @@
+*.o
+modules.order
+Module.symvers
+.tmp_versions/
+*.o.cmd
+*.ko.cmd
+mufs.ko
+mufs.mod.c
+mufs.objdump

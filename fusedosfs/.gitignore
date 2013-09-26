@@ -1,0 +1,9 @@
+*.o
+fusedosfs.mod.c
+fusedosfs.ko
+fusedosfs.objdump
+modules.order
+Module.symvers
+.tmp_versions/
+*.o.cmd
+*.ko.cmd

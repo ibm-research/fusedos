@@ -1,0 +1,36 @@
+#!/usr/bin/expect -f
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+
+set file    [lindex $argv 0]
+
+set prompt "mmcs$ "
+
+if { $file == "" } {
+    send_user "Usage: $argv0 file\n"
+    exit
+}
+
+spawn /bgsys/drivers/ppcfloor/bin/bg_console
+expect $prompt
+
+send "< $file\r"
+expect $prompt
+
+interact
+
+exit

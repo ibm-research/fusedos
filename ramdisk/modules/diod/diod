@@ -1,0 +1,76 @@
+#!/bin/bash
+# begin_generated_IBM_copyright_prolog
+#
+# This is an automatically generated copyright prolog.
+# After initializing,  DO NOT MODIFY OR MOVE
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+#
+# end_generated_IBM_copyright_prolog
+echo "Starting `basename $0`"
+
+. /dev/bgpers
+. /etc/bg_functions.sh
+. /etc/bg_profile
+
+DIOD_PREFIX=/opt/diod/
+
+IP_ROQ0=`bg_coords2ip $BG_NODE_COORDS $BG_NODE_TYPE`
+
+mount_9p_cn(){
+    echo "Attempting to mount ION file systems via 9P on compute node ..."
+    DIOD_SERVER=irank`cat /sys/class/infiniband/roq/nearest_io_rank`
+        CNT=5
+        while [ $CNT -gt 0 ]; do
+            if ping -c 1 $DIOD_SERVER >/dev/null 2>&1 ; then
+		# mkdir /bgusr/home{1,2,3} created exactly that ...
+                mkdir -p /bgusr/home1 /bgusr/home2 /bgusr/home3 /bgsys /scratch
+                ${DIOD_PREFIX}/sbin/diodmount -n $DIOD_SERVER:/bgusr/home1 /bgusr/home1
+                ${DIOD_PREFIX}/sbin/diodmount -n $DIOD_SERVER:/bgusr/home2 /bgusr/home2
+                ${DIOD_PREFIX}/sbin/diodmount -n $DIOD_SERVER:/bgusr/home3 /bgusr/home3
+                ${DIOD_PREFIX}/sbin/diodmount -n $DIOD_SERVER:/scratch /scratch
+                ${DIOD_PREFIX}/sbin/diodmount -n $DIOD_SERVER:/bgsys /bgsys
+		# FusedOS: ramdisks
+		mkdir /ion_ramdisk /cn_ramdisk
+                ${DIOD_PREFIX}/sbin/diodmount -n $DIOD_SERVER:/ion_ramdisk /ion_ramdisk
+		mount -t tmpfs -o size=50% tmpfs /cn_ramdisk
+		#
+                break
+            fi
+            CNT=$(expr $CNT - 1)
+            sleep 1
+        done
+        # copy etc files
+        if [ -r /bgsys/linux/bgfs/etc/passwd ]; then
+            cp -a /bgsys/linux/bgfs/etc/{group,passwd,shadow} /etc/
+        fi
+}
+
+if [ $BG_NODE_TYPE = "CN" ]; then
+    mount_9p_cn
+fi
+if [ $BG_NODE_TYPE = "ION" ]; then
+    echo "Starting `basename $0` server on ION"
+    mkdir -p /opt/diod/var/run/
+    # FusedOS: ramdisks
+    mkdir /ion_ramdisk
+    mount -t tmpfs -o size=80% tmpfs /ion_ramdisk
+    #
+    ${DIOD_PREFIX}/sbin/diod -l ${IP_ROQ0}:564 -L stderr -E -n
+fi
+
+

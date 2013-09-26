@@ -1,0 +1,24 @@
+ifndef TOP
+    TOP = $(shell while ! test -e common/make.rules; do cd ..; done; pwd)
+    export TOP
+endif
+include $(TOP)/common/make.rules
+
+.PHONY: build
+
+all: build
+
+$(CURDIR)/libroq/Makefile:
+	mkdir -p $(CURDIR)/libroq/config
+	cd $(CURDIR)/libroq; ./autogen.sh; ./configure --prefix=/ --libdir=/opt/roq/lib64
+
+build: $(CURDIR)/libroq/Makefile
+	$(MAKE) -C $(CURDIR)/libroq
+
+install: build
+	$(MAKE) DESTDIR=$(ASF_ROOTFS_DIR) -C $(CURDIR)/libroq install
+	@mkdir -p $(ASF_ROOTFS_DIR)/etc/ld.so.conf.d/; echo "/opt/roq/lib64/" > $(ASF_ROOTFS_DIR)/etc/ld.so.conf.d/roq.conf
+
+clean:
+	-$(MAKE) -C $(CURDIR)/libroq distclean
+	cd $(CURDIR)/libroq && $(RM) -rf aclocal.m4 autom4te.cache/ config.h.in configure Makefile.in  m4/ config/ COPYING INSTALL

@@ -1,0 +1,41 @@
+# begin_generated_IBM_copyright_prolog
+#
+# This is an automatically generated copyright prolog.
+# After initializing,  DO NOT MODIFY OR MOVE
+# ================================================================
+#
+# Licensed Materials - Property of IBM
+#
+# Blue Gene/Q
+#
+# (C) Copyright IBM Corp.  2010, 2012
+#
+# US Government Users Restricted Rights -
+# Use, duplication or disclosure restricted
+# by GSA ADP Schedule Contract with IBM Corp.
+#
+# This software is available to you under the
+# Eclipse Public License (EPL).
+#
+# ================================================================
+#
+# end_generated_IBM_copyright_prolog
+export PATH=/sbin:/usr/sbin:$PATH:/opt/fusedos/bin
+
+for i  in /etc/profile.d/*.sh ; do
+    if [ -r "$i" ]; then
+        if [ "$PS1" ]; then
+            . $i
+        else
+            . $i >/dev/null 2>&1
+        fi
+    fi
+done
+
+export LC_ALL=C
+
+. /etc/bg_profile
+
+# root@q01i3j01 [Q01-I3-J01 10000]
+export PS1="\u@\h [$ASF_RANKNAME $ASF_COORDS]:\w # "
+
