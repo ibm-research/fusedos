@@ -121,12 +121,12 @@ First, clone the main repository of FusedOS
 
         $ git clone https://github.com/ibm-research/fusedos.git
 
-Then, checkout the source of our modified Linux version inside the
-main repository
+Then, checkout the source of our modified Linux version as a git
+_submodule_ inside the main repository
 
-        $ cd fusedos/linux
-        $ git clone https://github.com/ibm-research/fusedos-linux.git 3.4.22-BGQ-rc3
-
+        $ cd fusedos/
+        $ git submodule init
+        $ git submodule update
 
 ### Preparing a Build Environment
 

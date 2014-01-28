@@ -1,0 +1,3 @@
+[submodule "linux/3.4.22-BGQ-rc3"]
+	path = linux/3.4.22-BGQ-rc3
+	url = git@github.com:ibm-research/fusedos-linux.git
