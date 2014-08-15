@@ -36,6 +36,8 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <linux/futex.h>
+#include <sys/ucontext.h>
+#include <sys/ptrace.h>
 
 #include "hwi/include/bqc/BIC.h"
 #include "hwi/include/bqc/BIC_inlines.h"
@@ -63,7 +65,11 @@ int debug = 0;
         ret = sc_##name(pc->regs.gpr[3], pc->regs.gpr[4], pc->regs.gpr[5],  \
                         pc->regs.gpr[6], pc->regs.gpr[7], pc->regs.gpr[8]); \
         CL_DEBUG("%s: %s syscall, ret 0x%lx / %ld\n", __func__, #name, ret, ret); \
-        actions[number]++;                                                  \
+        if (action_tracker) {                                               \
+            pthread_mutex_lock( &NodeState.cl_thread_mutex );               \
+            actions[number]++;                                              \
+            pthread_mutex_unlock( &NodeState.cl_thread_mutex );             \
+        }                                                                   \
         pc->regs.gpr[3] = ret;                                              \
     }
 
@@ -113,7 +119,9 @@ SYSCALL_EXTERN(write);                       //    4
 SYSCALL_EXTERN(open);                        //    5
 SYSCALL_EXTERN(close);                       //    6
 SYSCALL_EXTERN(creat);                       //    8
+SYSCALL_EXTERN(link);                        //    9
 SYSCALL_EXTERN(unlink);                      //   10
+SYSCALL_EXTERN(chdir);                       //   12
 SYSCALL_EXTERN(time);                        //   13
 SYSCALL_EXTERN(lseek);                       //   19
 SYSCALL_EXTERN(getpid);                      //   20
@@ -121,16 +129,21 @@ SYSCALL_EXTERN(setuid);                      //   23
 SYSCALL_EXTERN(getuid);                      //   24
 SYSCALL_EXTERN(alarm);                       //   27
 SYSCALL_EXTERN(sync);                        //   36
+SYSCALL_EXTERN(mkdir);                       //   39
+SYSCALL_EXTERN(rmdir);                       //   40
 SYSCALL_EXTERN(dup);                         //   41
 SYSCALL_EXTERN(times);                       //   43
 SYSCALL_EXTERN(brk);                         //   45
 SYSCALL_EXTERN(setgid);                      //   46
+SYSCALL_EXTERN(getgid);                      //   47
+SYSCALL_EXTERN(geteuid);                     //   49
 SYSCALL_EXTERN(ioctl);                       //   54
 SYSCALL_EXTERN(fcntl);                       //   55
 SYSCALL_EXTERN(setrlimit);                   //   75
 SYSCALL_EXTERN(getrusage);                   //   77
 SYSCALL_EXTERN(gettimeofday);                //   78
 SYSCALL_EXTERN(setgroups);                   //   81
+SYSCALL_EXTERN(symlink);                     //   83
 SYSCALL_EXTERN(readlink);                    //   85
 SYSCALL_EXTERN(mmap);                        //   90
 SYSCALL_EXTERN(munmap);                      //   91
@@ -495,7 +508,11 @@ void kthread(void* p)
             uint64_t syscall = pc->regs.gpr[0];
             uint64_t ret;
 
-            actions[0]++;
+            if (action_tracker) {
+                pthread_mutex_lock( &NodeState.cl_thread_mutex );
+                actions[0]++;
+                pthread_mutex_unlock( &NodeState.cl_thread_mutex );
+            }
 
             if (ex_code) {
                 // Just bail for now...
@@ -533,8 +550,12 @@ void kthread(void* p)
             SYSCALL_CASE(close, __NR_close);                     //    6
                 break;
             SYSCALL_CASE(creat, __NR_creat);                     //    8
-                break;                              
+                break;
+            SYSCALL_CASE(link, __NR_link);                       //    9
+                break;
             SYSCALL_CASE(unlink, __NR_unlink);                   //   10
+                break;
+            SYSCALL_CASE(chdir, __NR_chdir);                     //   12
                 break;
             SYSCALL_CASE(time, __NR_time);                       //   13
                 break;
@@ -549,7 +570,11 @@ void kthread(void* p)
             SYSCALL_CASE(alarm, __NR_alarm);                     //   27
                 break;
             SYSCALL_CASE(sync, __NR_sync);                       //   36
-                break;                 
+                break;
+            SYSCALL_CASE(mkdir, __NR_mkdir);                     //   39
+                break;
+            SYSCALL_CASE(rmdir, __NR_rmdir);                     //   40
+                break;
             SYSCALL_CASE(dup, __NR_dup);                         //   41
                 break;
             SYSCALL_CASE(times, __NR_times);                     //   43
@@ -557,6 +582,10 @@ void kthread(void* p)
             SYSCALL_CASE(brk, __NR_brk);                         //   45
                 break;
             SYSCALL_CASE(setgid, __NR_setgid);                   //   46
+                break;
+            SYSCALL_CASE(getgid, __NR_getgid);                   //   47
+                break;
+            SYSCALL_CASE(geteuid, __NR_geteuid);                 //   49
                 break;
             SYSCALL_CASE(ioctl, __NR_ioctl);                     //   54
                 break;
@@ -569,6 +598,8 @@ void kthread(void* p)
             SYSCALL_CASE(gettimeofday, __NR_gettimeofday);       //   78
                 break;
             SYSCALL_CASE(setgroups, __NR_setgroups);             //   81
+                break;
+            SYSCALL_CASE(symlink, __NR_symlink);                 //   83
                 break;
             SYSCALL_CASE(readlink, __NR_readlink);               //   85
                 break;
@@ -587,7 +618,7 @@ void kthread(void* p)
             SYSCALL_CASE(fstat, __NR_fstat);                     //  108
                 break;
             SYSCALL_CASE(fsync, __NR_fsync);                     //  118
-                break;                
+                break;
             SYSCALL_CASE(clone, __NR_clone);                     //  120
                 break;
             SYSCALL_CASE(uname, __NR_uname);                     //  122
@@ -771,7 +802,7 @@ done:
 //  dumping the same data)
 }
 
-static void sig_handler(int sig)
+static void sig_handler(int sig, siginfo_t * siginfo, void * ucontext_ptr)
 {
     // Just bail for now...
     if (sig == SIGUSR1) {
@@ -780,11 +811,17 @@ static void sig_handler(int sig)
         // blocking system calls to abort, to allow the thread to exit
         return;
     } else if (sig == 2) {
-        CL_ERROR("SIGINT, exiting\n");
+        CL_ERROR_NOSPC("SIGINT, exiting\n");
     } else if (sig == 4) {
-        CL_ERROR("SIGILL, exiting\n");
+        CL_ERROR_NOSPC("SIGILL, exiting\n");
     } else if (sig == 11) {
-        CL_ERROR("SIGSEGV, exiting\n");
+        ucontext_t * ucontext = (ucontext_t *) ucontext_ptr;
+        CL_ERROR_NOSPC("SIGSEGV, addr %lx nip %lx, link %lx, ctr %lx, dar %lx exiting\n",
+                (long unsigned int)siginfo->si_addr,
+                ucontext->uc_mcontext.regs->nip,
+                ucontext->uc_mcontext.regs->link,
+                ucontext->uc_mcontext.regs->ctr,
+                ucontext->uc_mcontext.regs->dar);
         stop_SPC_group();
         unload_tlbs();
         exit(-1);
@@ -956,7 +993,6 @@ static int map_user_virt_AS(spc_context_t* pc)
             CL_ERROR("text mmap failed, Text_VStart 0x%lu, errno %d, %s\n", pProc->Text_VStart, errno, strerror(errno));
             return -1;
         }
-
         CL_DEBUG("text_start %p\n", text_start);
 
         close(fd);
@@ -1189,17 +1225,19 @@ int main(int argc, char* argv[], char* envp[])
     pthread_setspecific(spc_key, &spc_0);
     pc = get_spc_context(spc_0);
 
-    signal(SIGINT, sig_handler);
-    signal(SIGILL, sig_handler);
-    signal(SIGSEGV, sig_handler);
-
     // use sigaction for SIGUSR1 to avoid flag SA_RESTART (restart syscall)
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = sig_handler;
+    sa.sa_flags |= SA_SIGINFO;
+    sa.sa_sigaction = sig_handler;
     if (sigaction(SIGUSR1, &sa, NULL))
         CL_ERROR("error setting signal handler for SIGUSR1, %d %s\n", errno, strerror(errno));
-
+    if(sigaction(SIGINT, &sa, NULL))
+        CL_ERROR("error setting signal handler for SIGINT, %d %s\n", errno, strerror(errno));
+    if(sigaction(SIGILL, &sa, NULL))
+        CL_ERROR("error setting signal handler for SIGILL, %d %s\n", errno, strerror(errno));
+    if(sigaction(SIGSEGV, &sa, NULL))
+        CL_ERROR("error setting signal handler for SIGSEGV, %d %s\n", errno, strerror(errno));
 
     // initialize and mmap cl shared memory area for access to MU alloc lock
     if (init_cl_shm_area())

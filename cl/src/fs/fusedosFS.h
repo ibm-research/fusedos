@@ -34,19 +34,24 @@ class fusedosFS : public virtFS {
     int init(void) {
       return 0;
     }
+
     int term(void) {
       return 0;
     }
+
     int setupJob(void) {
       return 0;
     }
+
     int cleanupJob(void) {
       return 0;
     }
+
     bool isMatch(const char* path) {
       TRACE( TRACE_VirtFS, ("(I) path %s\n", path) );
       return true;
     }
+
     uint64_t accept(int sockfd, struct sockaddr* addr, socklen_t* addrlen) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs accept, sockfd %d\n", sockfd));
       int remote_fd = File_GetRemoteFD(sockfd);
@@ -67,10 +72,12 @@ class fusedosFS : public virtFS {
 	}
       }
     }
+
     uint64_t access(const char* path, int mode) {
       TRACE( TRACE_VirtFS, ("(E) access method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t bind(int sockfd, const struct sockaddr* addr, socklen_t addrlen) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs bind, sockfd %d\n", sockfd));
       int remote_fd = File_GetRemoteFD(sockfd);
@@ -83,6 +90,7 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t chdir(const char* path) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs chdir, path %s\n", path));
       if (::chdir(path) != 0) {
@@ -92,14 +100,17 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(0);
       }
     }
+
     uint64_t chmod(const char* path, mode_t mode) {
       TRACE( TRACE_VirtFS, ("(E) chmod method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t chown(const char* path, uid_t uid, gid_t gid) {
       TRACE( TRACE_VirtFS, ("(E) chown method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t close(int fd) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs close, fd %d\n", fd));
       int remote_fd = File_GetRemoteFD(fd);
@@ -111,7 +122,8 @@ class fusedosFS : public virtFS {
         File_FreeFD(fd);
         return CNK_RC_SUCCESS(0);
       }
-    } 
+    }
+
     uint64_t connect(int sockfd, const struct sockaddr* addr, socklen_t addrlen) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs connect, sockfd %d\n", sockfd));
       int remote_fd = File_GetRemoteFD(sockfd);
@@ -124,6 +136,7 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t creat(const char* path, mode_t mode) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs creat, path %s\n", path));
       int fd = ::creat(path, mode);
@@ -135,19 +148,23 @@ class fusedosFS : public virtFS {
           ::close(fd);
           return CNK_RC_FAILURE(EMFILE);
       }
-    }           
+    }
+
     uint64_t fadvise(int fd, off_t offset, off_t len, int advice) {
       TRACE( TRACE_VirtFS, ("(E) fadvise method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t fchmod(int fd, mode_t mode) {
       TRACE( TRACE_VirtFS, ("(E) fchmod method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t fchown(int fd, uid_t uid, gid_t gid) {
       TRACE( TRACE_VirtFS, ("(E) fchown method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t fcntl(int fd, int cmd, uint64_t parm3) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs fcntl, fd %d\n", fd));
       int remote_fd = File_GetRemoteFD(fd);
@@ -160,10 +177,12 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t flock(int fd, int operation) {
       TRACE( TRACE_VirtFS, ("(E) flock method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t fstat(int fd, struct stat* statbuf) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs fstat, fd %d\n", fd));
       int remote_fd = File_GetRemoteFD(fd);
@@ -175,18 +194,22 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(0);
       }
     }
+
     uint64_t fstat64(int fd, struct stat64* statbuf) {
       TRACE( TRACE_VirtFS, ("(E) fstat64 method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t fstatfs(int fd, struct statfs* statbuf) {
       TRACE( TRACE_VirtFS, ("(E) fstatfs method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t fstatfs64(int fd, struct statfs64* statbuf) {
       TRACE( TRACE_VirtFS, ("(E) fstatfs64 method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t fsync(int fd) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs fsync, fd %d\n", fd));
       int remote_fd = File_GetRemoteFD(fd);
@@ -197,39 +220,48 @@ class fusedosFS : public virtFS {
       } else {
         return CNK_RC_SUCCESS(0);
       }
-    } 
+    }
+
     uint64_t ftruncate(int fd, off_t offset) {
       TRACE( TRACE_VirtFS, ("(E) ftruncate method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t ftruncate64(int fd, off_t offset) {
       TRACE( TRACE_VirtFS, ("(E) ftruncate64 method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t getcwd(const char* path, size_t len) {
       TRACE( TRACE_VirtFS, ("(E) getcwd method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t getdents(int fd, struct dirent* buf, unsigned int len) {
       TRACE( TRACE_VirtFS, ("(E) getdents method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t getdents64(int fd, struct dirent* buf, unsigned int len) {
       TRACE( TRACE_VirtFS, ("(E) getdents64 method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t getpeername(int sockfd, struct sockaddr* addr, socklen_t* addrlen) {
       TRACE( TRACE_VirtFS, ("(E) getpeername method not supported by fusedos file system for descriptor %d\n", sockfd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t getsockname(int sockfd, struct sockaddr* addr, socklen_t* addrlen) {
       TRACE( TRACE_VirtFS, ("(E) getsockname method not supported by fusedos file system for descriptor %d\n", sockfd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t getsockopt(int sockfd, int level, int optname, void* optval, socklen_t* optlen) {
       TRACE( TRACE_VirtFS, ("(E) getsockopt method not supported by fusedos file system for descriptor %d\n", sockfd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t ioctl(int fd, unsigned long int cmd, void* parm3) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs ioctl, fd %d\n", fd));
       int remote_fd = File_GetRemoteFD(fd);
@@ -241,14 +273,22 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(0);
       }
     }
+
     uint64_t lchown(const char* path, uid_t uid, gid_t gid) {
       TRACE( TRACE_VirtFS, ("(E) lchown method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t link(const char* path, const char* link) {
-      TRACE( TRACE_VirtFS, ("(E) link method not supported by fusedos file system for path %s\n", path) );
-      return CNK_RC_FAILURE(ENOSYS);
+      TRACE(TRACE_VirtFS, ("(I) fusedos fs link, path %s\n", path));
+      if (::link(path, link) != 0) {
+        TRACE(TRACE_VirtFS, ("(E) fusedos fs link failed, errno %d\n", errno));
+        return CNK_RC_FAILURE(errno);
+      } else {
+        return CNK_RC_SUCCESS(0);
+      }
     }
+
     uint64_t listen(int sockfd, int backlog) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs listen, sockfd %d\n", sockfd));
       int remote_fd = File_GetRemoteFD(sockfd);
@@ -260,10 +300,12 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(0);
       }
     }
+
     uint64_t llseek(int fd, off64_t offset, off64_t* result, int whence) {
       TRACE( TRACE_VirtFS, ("(E) llseek method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t lseek(int fd, off_t offset, int whence) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs lseek, fd %d\n", fd));
       int remote_fd = File_GetRemoteFD(fd);
@@ -276,22 +318,32 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t lstat(const char* __restrict__ path, struct stat* __restrict__ statbuf) {
       TRACE( TRACE_VirtFS, ("(E) lstat method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t lstat64(const char* path, struct stat64* statbuf) {
       TRACE( TRACE_VirtFS, ("(E) lstat64 method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t mkdir(const char* path, mode_t mode) {
-      TRACE( TRACE_VirtFS, ("(E) mkdir method not supported by fusedos file system for path %s\n", path) );
-      return CNK_RC_FAILURE(ENOSYS);
+      TRACE(TRACE_VirtFS, ("(I) fusedos fs mkdir, path %s\n", path));
+      if (::mkdir(path, mode) != 0) {
+        TRACE(TRACE_VirtFS, ("(E) fusedos fs mkdir failed, errno %d\n", errno));
+        return CNK_RC_FAILURE(errno);
+      } else {
+        return CNK_RC_SUCCESS(0);
+      }
     }
+
     uint64_t mmap(int fd, uint64_t length, uint64_t offset) {
       TRACE( TRACE_VirtFS, ("(E) mmap method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t open(const char* path, int oflags, mode_t mode) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs open, path %s\n", path));
       int fd = ::open(path, oflags, mode);
@@ -309,6 +361,7 @@ class fusedosFS : public virtFS {
 	}
       }
     }
+
     uint64_t poll(struct pollfd* fds, nfds_t nfds, int timeout) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs poll, fds[0].fd %d, fds[0].events 0x%x, fds[0].revents 0x%x, nfds %lu\n",
                             fds[0].fd, fds[0].events, fds[0].revents, nfds));
@@ -333,14 +386,17 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t pread64(int fd, void* buffer, size_t length, off64_t position) {
       TRACE( TRACE_VirtFS, ("(E) pread64 method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t pwrite64(int fd, const void* buffer, size_t length, off64_t position) {
       TRACE( TRACE_VirtFS, ("(E) pwrite64 method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t read(int fd, void* buffer, size_t cnt) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs read, fd %d\n", fd));
       int remote_fd = File_GetRemoteFD(fd);
@@ -353,6 +409,7 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t readlink(const char* path, char* buf, size_t bufsiz) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs readlink, path %s\n", path));
       ssize_t rc = ::readlink(path, buf, bufsiz);
@@ -364,26 +421,37 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t readv(int fd, const struct iovec* iov, int iovcnt) {
       TRACE( TRACE_VirtFS, ("(E) readv method not supported by fusedos file system for descriptor %d\n", fd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t recv(int sockfd, void* buffer, size_t length, int flags) {
       TRACE( TRACE_VirtFS, ("(E) recv method not supported by fusedos file system for descriptor %d\n", sockfd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t recvfrom(int sockfd, void* buffer, size_t length, int flags, struct sockaddr* addr, socklen_t* addrlen) {
       TRACE( TRACE_VirtFS, ("(E) recvfrom method not supported by fusedos file system for descriptor %d\n", sockfd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t rename(const char* oldpath, const char* newpath) {
       TRACE( TRACE_VirtFS, ("(E) rename method not supported by fusedos file system for path %s\n", oldpath) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t rmdir(const char* path) {
-      TRACE( TRACE_VirtFS, ("(E) rmdir method not supported by fusedos file system for path %s\n", path) );
-      return CNK_RC_FAILURE(ENOSYS);
+      TRACE(TRACE_VirtFS, ("(I) fusedos fs rmdir, path %s\n", path));
+      if (::rmdir(path) != 0) {
+        TRACE(TRACE_VirtFS, ("(E) fusedos fs rmdir failed, errno %d\n", errno));
+        return CNK_RC_FAILURE(errno);
+      } else {
+        return CNK_RC_SUCCESS(0);
+      }
     }
+
     uint64_t send(int sockfd, const void* buffer, size_t length, int flags) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs send, sockfd %d\n", sockfd));
       int remote_fd = File_GetRemoteFD(sockfd);
@@ -396,10 +464,12 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t sendto(int sockfd, const void* buffer, size_t length, int flags, const struct sockaddr* addr, socklen_t addrlen) {
       TRACE( TRACE_VirtFS, ("(E) send method not supported by fusedos file system for descriptor %d\n", sockfd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t setsockopt(int sockfd, int level, int optname, const void* optval, socklen_t optlen) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs setsockopt, sockfd %d\n", sockfd));
       int remote_fd = File_GetRemoteFD(sockfd);
@@ -412,10 +482,12 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t shutdown(int sockfd, int how) {
       TRACE( TRACE_VirtFS, ("(E) shutdown method not supported by fusedos file system for descriptor %d\n", sockfd) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t socket(int domain, int type, int protocol) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs socket, %d %d %d\n", domain, type, protocol));
       int fd = ::socket(domain, type, protocol);
@@ -434,6 +506,7 @@ class fusedosFS : public virtFS {
 	}
       }
     }
+
     uint64_t stat(const char* __restrict__ path, struct stat* __restrict__ statbuf) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs stat, path %s\n", path));
       if (::stat(path, statbuf) == -1) {
@@ -443,41 +516,61 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(0);
       }
     }
+
     uint64_t stat64(const char* __restrict__ path, struct stat64* __restrict__statbuf) {
       TRACE( TRACE_VirtFS, ("(E) stat64 method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t statfs(const char* __restrict__ path, struct statfs* __restrict__ statbuf) {
       TRACE( TRACE_VirtFS, ("(E) statfs method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t statfs64(const char* __restrict__ path, struct statfs64* __restrict__statbuf) {
       TRACE( TRACE_VirtFS, ("(E) statfs64 method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t symlink(const char* path, const char* link) {
-      TRACE( TRACE_VirtFS, ("(E) symlink method not supported by fusedos file system for path %s\n", path) );
-      return CNK_RC_FAILURE(ENOSYS);
+      TRACE(TRACE_VirtFS, ("(I) fusedos fs symlink, path %s\n", path));
+      if (::symlink(path, link) != 0) {
+        TRACE(TRACE_VirtFS, ("(E) fusedos fs symlink failed, errno %d\n", errno));
+        return CNK_RC_FAILURE(errno);
+      } else {
+        return CNK_RC_SUCCESS(0);
+      }
     }
+
     uint64_t truncate(const char* path, off_t len) {
       TRACE( TRACE_VirtFS, ("(E) truncate method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t truncate64(const char* path, off64_t len) {
       TRACE( TRACE_VirtFS, ("(E) truncate64 method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t utime(const char* path, const struct utimbuf* utimes) {
       TRACE( TRACE_VirtFS, ("(E) utime method not supported by fusedos file system for path %s\n", path) );
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t unlink(const char* path) {
-      TRACE( TRACE_VirtFS, ("(E) unlink method not supported by fusedos file system for path %s\n", path) );
-      return CNK_RC_FAILURE(ENOSYS);
+      TRACE(TRACE_VirtFS, ("(I) fusedos fs unlink, path %s\n", path));
+      if (::unlink(path) != 0) {
+        TRACE(TRACE_VirtFS, ("(E) fusedos fs unlink failed, errno %d\n", errno));
+        return CNK_RC_FAILURE(errno);
+      } else {
+        return CNK_RC_SUCCESS(0);
+      }
     }
+
     uint64_t write(int fd, const void* buffer, size_t cnt) {
       int remoteFD = File_GetRemoteFD(fd);
-      TRACE(TRACE_VirtFS, ("(I) fusedos fs write, fd %d (%d), buffer %*s\n", fd, remoteFD, (int)cnt, (char*)buffer));
+      //TRACE(TRACE_VirtFS, ("(I) fusedos fs write, fd %d (%d), buffer %*s\n", fd, remoteFD, (int)cnt, (char*)buffer));
+      TRACE(TRACE_VirtFS, ("(I) fusedos fs write, fd %d (%d)\n", fd, remoteFD));
       ssize_t rc = ::write(remoteFD, buffer, cnt);
       if (rc == -1) {
         TRACE(TRACE_VirtFS, ("(E) fusedos fs write failed, errno %d\n", errno));
@@ -486,6 +579,7 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t writev(int fd, const struct iovec* iov, int iovcnt) {
       TRACE(TRACE_VirtFS, ("(I) fusedos fs writev, fd %d, iovcnt %d\n", fd, iovcnt));
       int remote_fd = File_GetRemoteFD(fd);
@@ -498,12 +592,15 @@ class fusedosFS : public virtFS {
         return CNK_RC_SUCCESS(rc);
       }
     }
+
     uint64_t getFilenames(uint32_t& numfiles, char filename[][128]) {
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     uint64_t getFileContents(const char* pathname, size_t offset, size_t& numbytes, char* data) {
       return CNK_RC_FAILURE(ENOSYS);
     }
+
     int clearAllocations(void) {
       return CNK_RC_FAILURE(ENOSYS);
     }

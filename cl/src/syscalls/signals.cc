@@ -142,7 +142,9 @@ uint64_t sc_rt_sigaction(SYSCALL_FCN_ARGS)
 		    sigsetsize ));
 
 #if defined __FUSEDOS__                                                                                               // FUSEDOS
-    return syscall(SYS_rt_sigaction, r3, r4, r5, r6);                                                                  // FUSEDOS
+    //return syscall(SYS_rt_sigaction, r3, r4, r5, r6);                                                                  // FUSEDOS
+    // can't do this
+    return CNK_RC_FAILURE(EINVAL);
 #else                                                                                                                  // FUSEDOS
     if (sigsetsize != sizeof(kern_sigset_t))
     {
